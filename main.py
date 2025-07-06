@@ -19,7 +19,6 @@ TOTAL_CAR_CHECK_BASE_URL = "https://totalcarcheck.co.uk/FreeCheck?regno="
 # --- Utilities ---
 def get_undetected_driver() -> uc.Chrome:
     options = uc.ChromeOptions()
-    options.add_argument("--headless")  
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920,1080")
@@ -27,7 +26,7 @@ def get_undetected_driver() -> uc.Chrome:
     "user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36"
 )
 
-    return uc.Chrome(options=options, headless=True)
+    return uc.Chrome(options=options, headless=False)
 
 # --- Health Check ---
 @app.get("/")
