@@ -70,7 +70,7 @@ async def scrape_vehicle_image(
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--window-size=1920,1080")
-        service = Service(ChromeDriverManager().install())
+        service = Service(executable_path="/usr/local/bin/chromedriver")
         driver = webdriver.Chrome(service=service, options=chrome_options)
 
         if not driver:
