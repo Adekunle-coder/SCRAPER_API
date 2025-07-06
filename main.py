@@ -52,6 +52,8 @@
 # Install playwright with: pip install playwright && playwright install
 from fastapi import FastAPI, HTTPException
 from playwright.sync_api import sync_playwright
+import uvicorn
+import os
 
 app = FastAPI()
 API_TOKEN = "91f3846e5d7a474f8d36cfc16f17b1d3e5e5ef4bd2c7a21e3a4d05aa0b36b9d1"
@@ -71,3 +73,8 @@ def get_vehicle_image(vrm: str, token: str):
             return {"image_url": img_src}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8000))  # get PORT from environment or default to 8000
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
