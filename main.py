@@ -54,21 +54,16 @@ def scrape_vehicle_image(vrm: str, token: str):
         driver = get_chrome_driver()
         driver.get(f"{TOTAL_CAR_CHECK_BASE_URL}{vrm}")
 
-        wait = WebDriverWait(driver, 15)
-        image_element = wait.until(
-            EC.presence_of_element_located((By.ID, "vehicleImage"))
-        )
-        image_url = image_element.get_attribute("src")
-
-        if not image_url:
+        image = driver.find_element(By.ID, "vehicleImage")
+        if image:
+            img_url = image.get_attribute("src")
+            return img_url
+        else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Image found but 'src' was empty for VRM: {vrm}"
             )
-
-        print(f"[INFO] Found image URL for VRM {vrm}: {image_url}")
-        return {"image_url": image_url}
-
+       
     except TimeoutException:
         print(f"[ERROR] Timeout: Image not found for VRM {vrm}")
         raise HTTPException(
