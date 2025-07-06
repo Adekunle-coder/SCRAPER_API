@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 
 app = FastAPI()
 
-# Optional: Security token (e.g. ?token=12345)
+# Save as an env variable but this would work for now.
 API_TOKEN = "91f3846e5d7a474f8d36cfc16f17b1d3e5e5ef4bd2c7a21e3a4d05aa0b36b9d1"
 
 @app.get("/get-vehicle-image")
