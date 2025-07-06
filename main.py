@@ -2,17 +2,18 @@ from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 import requests
 from bs4 import BeautifulSoup
-
+import traceback  # for full stack trace logging
 
 app = FastAPI()
 
-# Save as an env variable but this would work for now.
+# TODO: Store securely via os.getenv in production
 API_TOKEN = "91f3846e5d7a474f8d36cfc16f17b1d3e5e5ef4bd2c7a21e3a4d05aa0b36b9d1"
 
+# Headers to mimic a browser
 referer = "https://totalcarcheck.co.uk/"
 accept = "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8"
 accept_language = "en-GB,en;q=0.6"
-cookie = "zero-chakra-ui-color-mode=light-zero; AMP_MKTG_8f1ede8e9c=JTdCJTIycmVmZXJyZXIlMjIlM0ElMjJodHRwcyUzQSUyRiUyRnd3dy5nb29nbGUuY29tJTJGJTIyJTJDJTIycmVmZXJyaW5nX2RvbWFpbiUyMiUzQSUyMnd3dy5nb29nbGUuY29tJTIyJTdE; AMP_8f1ede8e9c=JTdCJTIyZGV2aWNlSWQlMjIlM0ElMjI1MjgxOGYyNC05ZGQ3LTQ5OTAtYjcxMC01NTY0NzliMzAwZmYlMjIlMkMlMjJzZXNzaW9uSWQlMjIlM0ExNzA4MzgxNTQ4ODQzJTJDJTIyb3B0T3V0JTIyJTNBZmFsc2UlMkMlMjJsYXN0RXZlbnRUaW1lJTIyJTNBMTcwODM4MjE1NTQ2MCUyQyUyMmxhc3RFdmVudElkJTIyJTNBNiU3RA=="
+cookie = "zero-chakra-ui-color-mode=light-zero; AMP_MKTG_8f1ede8e9c=... (shortened for readability)"
 user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
 
 custom_headers = {
@@ -35,10 +36,13 @@ def get_vehicle_image(vrm: str, token: str = Query(...)):
 
         soup = BeautifulSoup(response.text, "html.parser")
         img = soup.find("img", {"id": "vehicleImage"})
+
         if img and img.get("src"):
             return {"image_url": img["src"]}
         else:
-            return {"image_url": None}
+            return {"image_url": None, "message": "Vehicle image not found on the page"}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("❌ An error occurred while fetching the image:")
+        traceback.print_exc()  # full traceback in Render logs
+        raise HTTPException(status_code=500, detail=f"Server error: {str(e)}")
