@@ -49,56 +49,6 @@ def verify_token(token: str):
         )
     return token
 
-# --- WebDriver Initialization and Teardown ---
-@app.on_event("startup")
-async def startup_event():
-    """
-    Initializes the Selenium WebDriver when the FastAPI application starts up.
-    This ensures the browser is ready before handling requests.
-    """
-    global driver
-    print("Initializing Chrome WebDriver...")
-    try:
-        chrome_options = Options()
-        # Run Chrome in headless mode (no visible browser UI)
-        chrome_options.add_argument("--headless")
-        # Disable GPU hardware acceleration (often needed in headless environments)
-        chrome_options.add_argument("--disable-gpu")
-        # Disable shared memory usage (important for Docker/container environments)
-        chrome_options.add_argument("--no-sandbox")
-        # Disable /dev/shm usage (can cause issues in some environments)
-        chrome_options.add_argument("--disable-dev-shm-usage")
-        # Set a larger window size to ensure elements are rendered correctly
-        chrome_options.add_argument("--window-size=1920,1080")
-        # Suppress logging to keep console clean
-        chrome_options.add_argument("--log-level=3")
-
-        # Use ChromeDriverManager to automatically manage ChromeDriver binary
-        # For production, consider specifying the path to a pre-installed chromedriver:
-        # service = Service(executable_path="/usr/bin/chromedriver")
-        service = Service(ChromeDriverManager().install())
-
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        print("Chrome WebDriver initialized successfully.")
-    except Exception as e:
-        print(f"Failed to initialize Chrome WebDriver: {e}")
-        # In a real app, you might want to log this error and potentially exit
-        # or have a fallback mechanism.
-        driver = None # Ensure driver is None if initialization fails
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    """
-    Quits the Selenium WebDriver when the FastAPI application shuts down.
-    This releases browser resources.
-    """
-    global driver
-    if driver:
-        print("Quitting Chrome WebDriver...")
-        driver.quit()
-        driver = None
-        print("Chrome WebDriver shut down.")
-
 # --- API Endpoints ---
 @app.get("/")
 async def read_root():
@@ -112,21 +62,27 @@ async def scrape_vehicle_image(
     vrm: str,
     token: str, # Token authentication dependency
 ):
-    if not driver:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Scraping service is not available. WebDriver failed to initialize."
-        )
-
-    target_url = f"{TOTAL_CAR_CHECK_BASE_URL}{vrm}"
-    image_url = None
-
+    global driver
     try:
-        print(f"Navigating to {target_url} for VRM: {vrm}")
-        driver.get(target_url)
+        chrome_options = Options()
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--window-size=1920,1080")
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
 
-        # Wait for the image element to be present and visible
-        # The ID is 'vehicleImage' as specified by the user.
+        if not driver:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Scraping service is not available. WebDriver failed to initialize."
+            )
+
+        target_url = f"{TOTAL_CAR_CHECK_BASE_URL}{vrm}"
+        image_url = None
+
+        driver.get(target_url)
         wait = WebDriverWait(driver, 20) # Wait up to 20 seconds
         image_element = wait.until(
             EC.presence_of_element_located((By.ID, "vehicleImage"))
@@ -161,6 +117,14 @@ async def scrape_vehicle_image(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred: {e}"
         )
+
+    except Exception as e:
+        print(f"Failed to initialize Chrome WebDriver: {e}")
+        driver = None 
+    
+
+    
+        
 
 # --- How to Run ---
 # 1. Save the code above as `main.py`.
