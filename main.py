@@ -19,7 +19,7 @@ TOTAL_CAR_CHECK_BASE_URL = "https://totalcarcheck.co.uk/FreeCheck?regno="
 # --- Utilities ---
 def get_undetected_driver() -> uc.Chrome:
     options = uc.ChromeOptions()
-    options.add_argument("--headless=new")  # Modern headless mode
+    options.add_argument("--headless")  # Modern headless mode
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920,1080")
